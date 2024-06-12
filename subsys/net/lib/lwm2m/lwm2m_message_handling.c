@@ -13,7 +13,7 @@
  */
 
 #define LOG_MODULE_NAME net_lwm2m_message_handling
-#define LOG_LEVEL	CONFIG_LWM2M_LOG_LEVEL
+#define LOG_LEVEL       CONFIG_LWM2M_LOG_LEVEL
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(LOG_MODULE_NAME);
@@ -154,8 +154,7 @@ static int init_block_ctx(const struct lwm2m_obj_path *path, struct lwm2m_block_
 			break;
 		}
 
-		if (timestamp - block1_contexts[i].timestamp >
-		    TIMEOUT_BLOCKWISE_TRANSFER_MS) {
+		if (timestamp - block1_contexts[i].timestamp > TIMEOUT_BLOCKWISE_TRANSFER_MS) {
 			*ctx = &block1_contexts[i];
 			/* TODO: notify application for block
 			 * transfer timeout
@@ -191,8 +190,7 @@ static int get_block_ctx(const struct lwm2m_obj_path *path, struct lwm2m_block_c
 	*ctx = NULL;
 
 	for (i = 0; i < NUM_BLOCK1_CONTEXT; i++) {
-		if (memcmp(path, &block1_contexts[i].path,
-			  sizeof(struct lwm2m_obj_path)) == 0) {
+		if (memcmp(path, &block1_contexts[i].path, sizeof(struct lwm2m_obj_path)) == 0) {
 			*ctx = &block1_contexts[i];
 			/* refresh timestamp */
 			(*ctx)->timestamp = k_uptime_get();
@@ -249,14 +247,13 @@ STATIC void release_output_block_ctx(struct coap_block_context **ctx)
 	}
 }
 
-
 static inline void log_buffer_usage(void)
 {
 #if defined(CONFIG_LWM2M_LOG_ENCODE_BUFFER_ALLOCATIONS)
 	LOG_PRINTK("body_encode_buffer_slab: free: %u, allocated: %u, max. allocated: %u\n",
-		 k_mem_slab_num_free_get(&body_encode_buffer_slab),
-		 k_mem_slab_num_used_get(&body_encode_buffer_slab),
-		 k_mem_slab_max_used_get(&body_encode_buffer_slab));
+		   k_mem_slab_num_free_get(&body_encode_buffer_slab),
+		   k_mem_slab_num_used_get(&body_encode_buffer_slab),
+		   k_mem_slab_max_used_get(&body_encode_buffer_slab));
 #endif
 }
 
@@ -316,6 +313,11 @@ STATIC int build_msg_block_for_send(struct lwm2m_message *msg, uint16_t block_nu
 		if (msg->type == COAP_TYPE_ACK) {
 			msg->mid = coap_header_get_id(msg->in.in_cpkt);
 			tkl = coap_header_get_token(msg->in.in_cpkt, token);
+		} else if (msg->type == COAP_TYPE_CON) {
+			/* When the ongoing msg is notification, modify the msg as normal reply */
+			msg->type = COAP_TYPE_ACK;
+			msg->mid = coap_header_get_id(msg->in.in_cpkt);
+			tkl = coap_header_get_token(msg->in.in_cpkt, token);
 		} else {
 			msg->mid = coap_next_id();
 			tkl = LWM2M_MSG_TOKEN_GENERATE_NEW;
@@ -355,7 +357,7 @@ STATIC int build_msg_block_for_send(struct lwm2m_message *msg, uint16_t block_nu
 		if (ret < 0) {
 			return ret;
 		}
-		if (msg->type == COAP_TYPE_ACK) {
+		if (msg->type == COAP_TYPE_ACK || msg->type == COAP_TYPE_CON) {
 			ongoing_block2_tx = msg;
 		}
 		msg->block_send = true;
@@ -461,7 +463,6 @@ void lwm2m_engine_context_close(struct lwm2m_ctx *client_ctx)
 	coap_pendings_clear(client_ctx->pendings, ARRAY_SIZE(client_ctx->pendings));
 	coap_replies_clear(client_ctx->replies, ARRAY_SIZE(client_ctx->replies));
 
-
 	client_ctx->connection_suspended = false;
 #if defined(CONFIG_LWM2M_QUEUE_MODE_ENABLED)
 	client_ctx->buffer_client_messages = true;
@@ -480,8 +481,7 @@ void lwm2m_engine_context_init(struct lwm2m_ctx *client_ctx)
 }
 /* utility functions */
 
-int coap_options_to_path(struct coap_option *opt, int options_count,
-				struct lwm2m_obj_path *path)
+int coap_options_to_path(struct coap_option *opt, int options_count, struct lwm2m_obj_path *path)
 {
 	uint16_t len,
 		*id[4] = {&path->obj_id, &path->obj_inst_id, &path->res_id, &path->res_inst_id};
@@ -1254,7 +1254,7 @@ int lwm2m_write_handler(struct lwm2m_engine_obj_inst *obj_inst, struct lwm2m_eng
 }
 
 static int lwm2m_read_resource_data(struct lwm2m_message *msg, void *data_ptr, size_t data_len,
-			       uint8_t data_type)
+				    uint8_t data_type)
 {
 	int ret;
 
@@ -1272,15 +1272,15 @@ static int lwm2m_read_resource_data(struct lwm2m_message *msg, void *data_ptr, s
 		break;
 
 	case LWM2M_RES_TYPE_U32:
-		ret = engine_put_s64(&msg->out, &msg->path, (int64_t) *(uint32_t *)data_ptr);
+		ret = engine_put_s64(&msg->out, &msg->path, (int64_t) * (uint32_t *)data_ptr);
 		break;
 
 	case LWM2M_RES_TYPE_U16:
-		ret = engine_put_s32(&msg->out, &msg->path, (int32_t) *(uint16_t *)data_ptr);
+		ret = engine_put_s32(&msg->out, &msg->path, (int32_t) * (uint16_t *)data_ptr);
 		break;
 
 	case LWM2M_RES_TYPE_U8:
-		ret = engine_put_s16(&msg->out, &msg->path, (int16_t) *(uint8_t *)data_ptr);
+		ret = engine_put_s16(&msg->out, &msg->path, (int16_t) * (uint8_t *)data_ptr);
 		break;
 
 	case LWM2M_RES_TYPE_S64:
@@ -1304,7 +1304,7 @@ static int lwm2m_read_resource_data(struct lwm2m_message *msg, void *data_ptr, s
 			ret = engine_put_time(&msg->out, &msg->path, *(time_t *)data_ptr);
 		} else if (data_len == sizeof(uint32_t)) {
 			ret = engine_put_time(&msg->out, &msg->path,
-					      (time_t) *((uint32_t *)data_ptr));
+					      (time_t) * ((uint32_t *)data_ptr));
 		} else {
 			LOG_ERR("Resource time length not supported %zu", data_len);
 			ret = -EINVAL;
@@ -1339,7 +1339,7 @@ static int lwm2m_read_cached_data(struct lwm2m_message *msg,
 	int ret;
 	struct lwm2m_time_series_elem buf;
 	struct lwm2m_cache_read_entry *read_info;
-	size_t  length = lwm2m_cache_size(cached_data);
+	size_t length = lwm2m_cache_size(cached_data);
 
 	LOG_DBG("Read cached data size %u", length);
 
@@ -1410,7 +1410,6 @@ static int lwm2m_read_cached_data(struct lwm2m_message *msg,
 		default:
 			ret = engine_put_float(&msg->out, &msg->path, &buf.f);
 			break;
-
 		}
 
 		/* Validate that we really read some data */
@@ -1538,7 +1537,7 @@ static int lwm2m_read_handler(struct lwm2m_engine_obj_inst *obj_inst, struct lwm
 
 		/* Validate that we really read some data */
 		if (ret < 0) {
-			LOG_ERR("Read operation fail");
+			LOG_ERR("Read operation fail, This seems to be a common point to hit");
 			return -ENOMEM;
 		}
 	}
@@ -1718,7 +1717,7 @@ static int lwm2m_perform_read_object_instance(struct lwm2m_message *msg,
 			}
 		}
 
-move_forward:
+	move_forward:
 		ret = engine_put_end_oi(&msg->out, &msg->path);
 		if (ret < 0) {
 			return ret;
@@ -2474,8 +2473,7 @@ static int handle_request(struct coap_packet *request, struct lwm2m_message *msg
 
 			if ((code & COAP_REQUEST_MASK) == COAP_METHOD_GET) {
 				/* Normal Observation Request or Cancel */
-				r = lwm2m_engine_observation_handler(msg, observe, accept,
-									false);
+				r = lwm2m_engine_observation_handler(msg, observe, accept, false);
 				if (r < 0) {
 					goto error;
 				}
@@ -2483,8 +2481,7 @@ static int handle_request(struct coap_packet *request, struct lwm2m_message *msg
 				r = do_read_op(msg, accept);
 			} else {
 				/* Composite Observation request & cancel handler */
-				r = lwm2m_engine_observation_handler(msg, observe, accept,
-									true);
+				r = lwm2m_engine_observation_handler(msg, observe, accept, true);
 				if (r < 0) {
 					goto error;
 				}
@@ -2514,7 +2511,7 @@ static int handle_request(struct coap_packet *request, struct lwm2m_message *msg
 #if defined(CONFIG_LWM2M_ACCESS_CONTROL_ENABLE)
 		if (msg->operation == LWM2M_OP_CREATE && r >= 0) {
 			access_control_add(msg->path.obj_id, msg->path.obj_inst_id,
-						msg->ctx->srv_obj_inst);
+					   msg->ctx->srv_obj_inst);
 		}
 #endif
 		break;
@@ -2791,6 +2788,10 @@ void lwm2m_udp_receive(struct lwm2m_ctx *client_ctx, uint8_t *buf, uint16_t buf_
 
 		/* free up msg resources */
 		if (msg) {
+			if (find_ongoing_block2_tx()) {
+				LOG_INF("Do not release ongoing block message");
+				return;
+			}
 			lwm2m_reset_message(msg, true);
 		}
 
@@ -3107,6 +3108,8 @@ msg_init:
 
 	obs->active_notify = msg;
 	obs->resource_update = false;
+	/* Clear out existing Block2 transfers when new requests come */
+	clear_ongoing_block2_tx();
 	lwm2m_information_interface_send(msg);
 #if defined(CONFIG_LWM2M_RESOURCE_DATA_CACHE_SUPPORT)
 	msg->cache_info = NULL;
@@ -3408,8 +3411,8 @@ static void do_send_timeout_cb(struct lwm2m_message *msg)
 
 #if defined(CONFIG_LWM2M_RESOURCE_DATA_CACHE_SUPPORT)
 static bool init_next_pending_timeseries_data(struct lwm2m_cache_read_info *cache_temp,
-					  sys_slist_t *lwm2m_path_list,
-					  sys_slist_t *lwm2m_path_free_list)
+					      sys_slist_t *lwm2m_path_list,
+					      sys_slist_t *lwm2m_path_free_list)
 {
 	uint32_t bytes_available = 0;
 
@@ -3441,7 +3444,7 @@ static bool init_next_pending_timeseries_data(struct lwm2m_cache_read_info *cach
 #endif
 
 int lwm2m_send_cb(struct lwm2m_ctx *ctx, const struct lwm2m_obj_path path_list[],
-			 uint8_t path_list_size, lwm2m_send_cb_t reply_cb)
+		  uint8_t path_list_size, lwm2m_send_cb_t reply_cb)
 {
 #if defined(CONFIG_LWM2M_SERVER_OBJECT_VERSION_1_1)
 	struct lwm2m_message *msg;
@@ -3570,7 +3573,7 @@ msg_init:
 					    CONFIG_LWM2M_COMPOSITE_PATH_LIST_SIZE);
 
 		if (init_next_pending_timeseries_data(&cache_temp_info, &lwm2m_path_list,
-						     &lwm2m_path_free_list)) {
+						      &lwm2m_path_free_list)) {
 			goto msg_alloc;
 		}
 	}
@@ -3588,7 +3591,7 @@ cleanup:
 }
 
 int lwm2m_send(struct lwm2m_ctx *ctx, const struct lwm2m_obj_path path_list[],
-			 uint8_t path_list_size, bool confirmation_request)
+	       uint8_t path_list_size, bool confirmation_request)
 {
 	if (!confirmation_request) {
 		return -EINVAL;
