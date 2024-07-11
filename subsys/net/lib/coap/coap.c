@@ -756,11 +756,13 @@ int coap_packet_parse(struct coap_packet *cpkt, uint8_t *data, uint16_t len,
 	/* Token lengths 9-15 are reserved. */
 	tkl = cpkt->data[0] & 0x0f;
 	if (tkl > 8) {
+        LOG_ERR("Token length %d is invalid",tkl);
 		return -EBADMSG;
 	}
 
 	cpkt->hdr_len = BASIC_HEADER_SIZE + tkl;
 	if (cpkt->hdr_len > len) {
+        LOG_ERR("header length longer than message: %d > %d", cpkt->hdr_len, len);
 		return -EBADMSG;
 	}
 
