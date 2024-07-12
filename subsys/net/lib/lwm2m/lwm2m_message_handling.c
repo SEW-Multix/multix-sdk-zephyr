@@ -406,7 +406,7 @@ int lwm2m_send_message_async(struct lwm2m_message *msg)
 	int ret;
 
 	ret = lwm2m_rd_client_connection_resume(msg->ctx);
-	if (ret) {
+	if (ret && ret != -EPERM) {
 		lwm2m_reset_message(msg, true);
 		return ret;
 	}
@@ -2265,6 +2265,14 @@ void lwm2m_udp_receive(struct lwm2m_ctx *client_ctx, uint8_t *buf, uint16_t buf_
 	r = coap_packet_parse(&response, buf, buf_len, NULL, 0);
 	if (r < 0) {
 		LOG_ERR("Invalid data received (err:%d)", r);
+        char buffer_string[256] = "";
+        for(int i=0; i < (((256) < (buf_len)) ? (256) : (buf_len)); i++)
+        {
+            char num[5] = "";
+            sprintf(num," %X",buf[i]);
+            strncat(buffer_string, num, strlen(num));
+        }
+        LOG_DBG("Data length: %d, data: %s",buf_len, buffer_string);
 		return;
 	}
 
