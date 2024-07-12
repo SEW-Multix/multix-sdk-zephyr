@@ -264,6 +264,7 @@ static int package_write_cb(uint16_t obj_inst_id, uint16_t res_id,
 
 	write_callback = lwm2m_firmware_get_write_cb_inst(obj_inst_id);
 	if (write_callback) {
+        LOG_DBG("Calling: firmware_block_received_cb()");
 		ret = write_callback(obj_inst_id, res_id, res_inst_id, data, data_len, last_block,
 				     total_size);
 	}
