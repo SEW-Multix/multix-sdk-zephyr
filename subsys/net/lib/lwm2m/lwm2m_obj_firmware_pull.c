@@ -24,7 +24,6 @@ static void set_update_result(uint16_t obj_inst_id, int error_code)
 		lwm2m_firmware_set_update_state_inst(obj_inst_id, STATE_DOWNLOADED);
 		return;
 	}
-    LOG_DBG("Update_result: %d", error_code);
 
 	switch (error_code) {
 	case -ENOMEM:

@@ -189,9 +189,7 @@ int modem_iface_uart_init_dev(struct modem_iface *iface,
 
 	modem_iface_uart_flush(iface);
 	uart_irq_callback_set(iface->dev, modem_iface_uart_isr);
-	printk("rx enable attempt\n");
 	uart_irq_rx_enable(iface->dev);
-	printk("rx enable attempt passes\n");
 
 	if (prev) {
 		uart_irq_rx_enable(prev);
