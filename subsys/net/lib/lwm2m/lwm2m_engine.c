@@ -821,7 +821,8 @@ static void socket_loop(void *p1, void *p2, void *p3)
 
 		socket_reset_pollfd_events();
 
-		timeout = next > now ? next - now : 0;
+        // Exa: Using 10ms timeout to avoid starvation
+		timeout = next > now ? next - now : 10;
 		if (IS_ENABLED(CONFIG_LWM2M_TICKLESS)) {
 			/* prevent roll-over */
 			timeout = timeout > INT32_MAX ? INT32_MAX : timeout;
