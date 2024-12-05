@@ -6,7 +6,7 @@
  */
 
 #define LOG_MODULE_NAME net_lwm2m_obj_firmware
-#define LOG_LEVEL CONFIG_LWM2M_LOG_LEVEL
+#define LOG_LEVEL       CONFIG_LWM2M_LOG_LEVEL
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(LOG_MODULE_NAME);
@@ -28,30 +28,30 @@ LOG_MODULE_REGISTER(LOG_MODULE_NAME);
 #endif
 
 /* Firmware resource IDs */
-#define FIRMWARE_PACKAGE_ID			0
-#define FIRMWARE_PACKAGE_URI_ID			1
-#define FIRMWARE_UPDATE_ID			2
-#define FIRMWARE_STATE_ID			3
-#define FIRMWARE_UPDATE_RESULT_ID		5
-#define FIRMWARE_PACKAGE_NAME_ID		6
-#define FIRMWARE_PACKAGE_VERSION_ID		7
-#define FIRMWARE_UPDATE_PROTO_SUPPORT_ID	8
-#define FIRMWARE_UPDATE_DELIV_METHOD_ID		9
+#define FIRMWARE_PACKAGE_ID              0
+#define FIRMWARE_PACKAGE_URI_ID          1
+#define FIRMWARE_UPDATE_ID               2
+#define FIRMWARE_STATE_ID                3
+#define FIRMWARE_UPDATE_RESULT_ID        5
+#define FIRMWARE_PACKAGE_NAME_ID         6
+#define FIRMWARE_PACKAGE_VERSION_ID      7
+#define FIRMWARE_UPDATE_PROTO_SUPPORT_ID 8
+#define FIRMWARE_UPDATE_DELIV_METHOD_ID  9
 
-#define FIRMWARE_MAX_ID				10
+#define FIRMWARE_MAX_ID 10
 
-#define DELIVERY_METHOD_PULL_ONLY		0
-#define DELIVERY_METHOD_PUSH_ONLY		1
-#define DELIVERY_METHOD_BOTH			2
+#define DELIVERY_METHOD_PULL_ONLY 0
+#define DELIVERY_METHOD_PUSH_ONLY 1
+#define DELIVERY_METHOD_BOTH      2
 
-#define PACKAGE_URI_LEN				255
+#define PACKAGE_URI_LEN 255
 
 /*
  * Calculate resource instances as follows:
  * start with FIRMWARE_MAX_ID
  * subtract EXEC resources (1)
  */
-#define RESOURCE_INSTANCE_COUNT	(FIRMWARE_MAX_ID - 1)
+#define RESOURCE_INSTANCE_COUNT (FIRMWARE_MAX_ID - 1)
 
 /* resource state variables */
 static uint8_t update_state[MAX_INSTANCE_COUNT];
@@ -70,8 +70,7 @@ static struct lwm2m_engine_obj_field fields[] = {
 	OBJ_FIELD_DATA(FIRMWARE_PACKAGE_NAME_ID, R_OPT, STRING),
 	OBJ_FIELD_DATA(FIRMWARE_PACKAGE_VERSION_ID, R_OPT, STRING),
 	OBJ_FIELD_DATA(FIRMWARE_UPDATE_PROTO_SUPPORT_ID, R_OPT, U8),
-	OBJ_FIELD_DATA(FIRMWARE_UPDATE_DELIV_METHOD_ID, R, U8)
-};
+	OBJ_FIELD_DATA(FIRMWARE_UPDATE_DELIV_METHOD_ID, R, U8)};
 
 static struct lwm2m_engine_obj_inst inst[MAX_INSTANCE_COUNT];
 static struct lwm2m_engine_res res[MAX_INSTANCE_COUNT][FIRMWARE_MAX_ID];
@@ -98,8 +97,8 @@ uint8_t lwm2m_firmware_get_update_state(void)
 void lwm2m_firmware_set_update_state_inst(uint16_t obj_inst_id, uint8_t state)
 {
 	bool error = false;
-	struct lwm2m_obj_path path = LWM2M_OBJ(LWM2M_OBJECT_FIRMWARE_ID, obj_inst_id,
-					       FIRMWARE_UPDATE_RESULT_ID);
+	struct lwm2m_obj_path path =
+		LWM2M_OBJ(LWM2M_OBJECT_FIRMWARE_ID, obj_inst_id, FIRMWARE_UPDATE_RESULT_ID);
 
 	lwm2m_registry_lock();
 	/* Check LWM2M SPEC appendix E.6.1 */
@@ -134,8 +133,7 @@ void lwm2m_firmware_set_update_state_inst(uint16_t obj_inst_id, uint8_t state)
 	}
 
 	if (error) {
-		LOG_ERR("Invalid state transition: %u -> %u",
-			update_state[obj_inst_id], state);
+		LOG_ERR("Invalid state transition: %u -> %u", update_state[obj_inst_id], state);
 	}
 
 	path.res_id = FIRMWARE_STATE_ID;
@@ -165,8 +163,8 @@ void lwm2m_firmware_set_update_result_inst(uint16_t obj_inst_id, uint8_t result)
 {
 	uint8_t state;
 	bool error = false;
-	struct lwm2m_obj_path path = LWM2M_OBJ(LWM2M_OBJECT_FIRMWARE_ID, obj_inst_id,
-					       FIRMWARE_UPDATE_RESULT_ID);
+	struct lwm2m_obj_path path =
+		LWM2M_OBJ(LWM2M_OBJECT_FIRMWARE_ID, obj_inst_id, FIRMWARE_UPDATE_RESULT_ID);
 
 	lwm2m_registry_lock();
 	/* Check LWM2M SPEC appendix E.6.1 */
@@ -220,8 +218,7 @@ void lwm2m_firmware_set_update_result_inst(uint16_t obj_inst_id, uint8_t result)
 	}
 
 	if (error) {
-		LOG_ERR("Unexpected result(%u) set while state is %u",
-			result, state);
+		LOG_ERR("Unexpected result(%u) set while state is %u", result, state);
 	}
 
 	lwm2m_set_u8(&path, result);
@@ -234,9 +231,8 @@ void lwm2m_firmware_set_update_result(uint8_t result)
 	lwm2m_firmware_set_update_result_inst(0, result);
 }
 
-static int package_write_cb(uint16_t obj_inst_id, uint16_t res_id,
-			    uint16_t res_inst_id, uint8_t *data, uint16_t data_len,
-			    bool last_block, size_t total_size)
+static int package_write_cb(uint16_t obj_inst_id, uint16_t res_id, uint16_t res_inst_id,
+			    uint8_t *data, uint16_t data_len, bool last_block, size_t total_size)
 {
 	uint8_t state;
 	int ret = 0;
@@ -297,23 +293,37 @@ static int package_write_cb(uint16_t obj_inst_id, uint16_t res_id,
 	return ret;
 }
 
-static int package_uri_write_cb(uint16_t obj_inst_id, uint16_t res_id,
-				uint16_t res_inst_id, uint8_t *data, uint16_t data_len,
-				bool last_block, size_t total_size)
+static int package_uri_write_cb(uint16_t obj_inst_id, uint16_t res_id, uint16_t res_inst_id,
+				uint8_t *data, uint16_t data_len, bool last_block,
+				size_t total_size)
 {
-	LOG_DBG("PACKAGE_URI WRITE: %s", package_uri[obj_inst_id]);
+	LOG_DBG("PACKAGE_URI WRITE: \"%s\", len: %d", package_uri[obj_inst_id], data_len);
 
 #ifdef CONFIG_LWM2M_FIRMWARE_UPDATE_PULL_SUPPORT
 	uint8_t state = lwm2m_firmware_get_update_state_inst(obj_inst_id);
+	bool is_null_uri = (data_len == 1U && data[0] == '\0');
+	bool is_empty_uri = (data_len == 0U);
+
+	if (is_null_uri) {
+		LOG_DBG("PACKAGE_URI WRITE: NULL URI");
+	}
 
 	if (state == STATE_IDLE) {
-		if (data_len > 0) {
+		if (!is_null_uri && !is_empty_uri) {
 			lwm2m_firmware_set_update_state_inst(obj_inst_id, STATE_DOWNLOADING);
 			lwm2m_firmware_start_transfer(obj_inst_id, package_uri[obj_inst_id]);
 		}
-	} else if (state == STATE_DOWNLOADED && data_len == 0U) {
+	} else if (state == STATE_DOWNLOADED && (is_null_uri || is_empty_uri)) {
+		lwm2m_engine_user_cb_t cancel_callback;
+		int ret = -1;
 		/* reset to state idle and result default */
 		lwm2m_firmware_set_update_result_inst(obj_inst_id, RESULT_DEFAULT);
+		cancel_callback = lwm2m_firmware_get_cancel_cb_inst(obj_inst_id);
+		if (cancel_callback) {
+			ret = cancel_callback(obj_inst_id);
+		}
+		LOG_DBG("Update canceled by writing %d bytes", data_len);
+		return 0;
 	}
 
 	return 0;
@@ -382,8 +392,7 @@ lwm2m_engine_user_cb_t lwm2m_firmware_get_cancel_cb_inst(uint16_t obj_inst_id)
 	return cancel_cb[obj_inst_id];
 }
 
-static int firmware_update_cb(uint16_t obj_inst_id,
-			      uint8_t *args, uint16_t args_len)
+static int firmware_update_cb(uint16_t obj_inst_id, uint8_t *args, uint16_t args_len)
 {
 	lwm2m_engine_execute_cb_t callback;
 	uint8_t state;
@@ -402,9 +411,9 @@ static int firmware_update_cb(uint16_t obj_inst_id,
 		ret = callback(obj_inst_id, args, args_len);
 		if (ret < 0) {
 			LOG_ERR("Failed to update firmware: %d", ret);
-			lwm2m_firmware_set_update_result_inst(obj_inst_id,
-				ret == -EINVAL ? RESULT_INTEGRITY_FAILED :
-						 RESULT_UPDATE_FAILED);
+			lwm2m_firmware_set_update_result_inst(
+				obj_inst_id,
+				ret == -EINVAL ? RESULT_INTEGRITY_FAILED : RESULT_UPDATE_FAILED);
 			return 0;
 		}
 	}
@@ -420,7 +429,8 @@ static struct lwm2m_engine_obj_inst *firmware_create(uint16_t obj_inst_id)
 	for (index = 0; index < MAX_INSTANCE_COUNT; index++) {
 		if (inst[index].obj && inst[index].obj_inst_id == obj_inst_id) {
 			LOG_ERR("Can not create instance - "
-				"already existing: %u", obj_inst_id);
+				"already existing: %u",
+				obj_inst_id);
 			return NULL;
 		}
 	}
@@ -433,32 +443,30 @@ static struct lwm2m_engine_obj_inst *firmware_create(uint16_t obj_inst_id)
 
 	if (index >= MAX_INSTANCE_COUNT) {
 		LOG_ERR("Can not create instance - "
-			"no more room: %u", obj_inst_id);
+			"no more room: %u",
+			obj_inst_id);
 		return NULL;
 	}
 
 	init_res_instance(res_inst[index], ARRAY_SIZE(res_inst[index]));
 
 	/* initialize instance resource data */
-	INIT_OBJ_RES_OPT(FIRMWARE_PACKAGE_ID, res[index], i, res_inst[index], j, 1,
-			 false, true, NULL, NULL, NULL, package_write_cb, NULL);
-	INIT_OBJ_RES_LEN(FIRMWARE_PACKAGE_URI_ID, res[index], i, res_inst[index], j, 1,
-		     false, true, package_uri[index], PACKAGE_URI_LEN, 0, NULL, NULL, NULL,
-		     package_uri_write_cb, NULL);
+	INIT_OBJ_RES_OPT(FIRMWARE_PACKAGE_ID, res[index], i, res_inst[index], j, 1, false, true,
+			 NULL, NULL, NULL, package_write_cb, NULL);
+	INIT_OBJ_RES_LEN(FIRMWARE_PACKAGE_URI_ID, res[index], i, res_inst[index], j, 1, false, true,
+			 package_uri[index], PACKAGE_URI_LEN, 0, NULL, NULL, NULL,
+			 package_uri_write_cb, NULL);
 	INIT_OBJ_RES_EXECUTE(FIRMWARE_UPDATE_ID, res[index], i, firmware_update_cb);
 	INIT_OBJ_RES_DATA(FIRMWARE_STATE_ID, res[index], i, res_inst[index], j,
 			  &(update_state[index]), sizeof(update_state[index]));
 	INIT_OBJ_RES_DATA(FIRMWARE_UPDATE_RESULT_ID, res[index], i, res_inst[index], j,
 			  &(update_result[index]), sizeof(update_result[index]));
-	INIT_OBJ_RES_OPTDATA(FIRMWARE_PACKAGE_NAME_ID, res[index], i,
-			     res_inst[index], j);
-	INIT_OBJ_RES_OPTDATA(FIRMWARE_PACKAGE_VERSION_ID, res[index], i,
-			     res_inst[index], j);
-	INIT_OBJ_RES_MULTI_OPTDATA(FIRMWARE_UPDATE_PROTO_SUPPORT_ID, res[index], i,
-				 res_inst[index], j, 1, false);
-	INIT_OBJ_RES_DATA(FIRMWARE_UPDATE_DELIV_METHOD_ID, res[index], i,
-			  res_inst[index], j, &(delivery_method[index]),
-			  sizeof(delivery_method[index]));
+	INIT_OBJ_RES_OPTDATA(FIRMWARE_PACKAGE_NAME_ID, res[index], i, res_inst[index], j);
+	INIT_OBJ_RES_OPTDATA(FIRMWARE_PACKAGE_VERSION_ID, res[index], i, res_inst[index], j);
+	INIT_OBJ_RES_MULTI_OPTDATA(FIRMWARE_UPDATE_PROTO_SUPPORT_ID, res[index], i, res_inst[index],
+				   j, 1, false);
+	INIT_OBJ_RES_DATA(FIRMWARE_UPDATE_DELIV_METHOD_ID, res[index], i, res_inst[index], j,
+			  &(delivery_method[index]), sizeof(delivery_method[index]));
 
 	inst[index].resources = res[index];
 	inst[index].resource_count = i;
@@ -482,7 +490,6 @@ static int lwm2m_firmware_init(void)
 	firmware.max_instance_count = MAX_INSTANCE_COUNT;
 	firmware.create_cb = firmware_create;
 	lwm2m_register_obj(&firmware);
-
 
 	for (int idx = 0; idx < MAX_INSTANCE_COUNT; idx++) {
 		package_uri[idx][0] = '\0';
